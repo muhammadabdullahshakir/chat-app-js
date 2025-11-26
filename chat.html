@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dual Chat Simulator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Ensure the page uses the Inter font and a clean background */
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #2563eb; /* Gray-700 */
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        font-weight: bold;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .chat-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f3f4f6; /* Very light gray background */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      /* Chat container specific styling for mobile/desktop */
+      #messagesbox {
+        height: 60vh; /* Chat box size */
+        max-height: 550px;
+        padding: 1rem;
+      }
+
+      /* Base styling for chat bubbles (LI elements) */
+      #chatDisplay li {
+        max-width: 75%; /* Smaller message box size */
+        padding: 10px 14px;
+        padding-top: 20px;
+        margin-bottom: 10px;
+        border-radius: 1.25rem;
+        word-wrap: break-word;
+        font-size: 0.95rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        list-style-type: none;
+        position: relative;
+        transition: all 0.3s ease-in-out;
+      }
+      /* Edit/Delete icons for BOTH sender and receiver */
+      #chatDisplay li > span {
+        position: absolute;
+        top: 15px;
+        transform: translateY(-50%);
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        cursor: pointer;
+        padding: 3px;
+        background-color: rgba(0, 0, 0, 0.08);
+        border-radius: 9999px;
+        height: 20px;
+        width: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Delete icon right */
+      #chatDisplay li > span:last-child {
+        right: 8px;
+      }
+
+      /* Edit icon left of delete */
+      #chatDisplay li > span:nth-last-child(2) {
+        right: 30px;
+      }
+
+      /* Hover to show icons for both types */
+      #chatDisplay li:hover > span {
+        opacity: 1;
+      }
+
+      /* Sender Messages (Right-aligned, primary color) */
+      #chatDisplay li.sender-message {
+        width: auto;
+        max-width: 40%;
+        background-color: #2563eb; /* Blue-600 */
+        color: white;
+        margin-left: auto; /* Push to the right */
+        border-bottom-right-radius: 0.5rem;
+        padding-right: 48px; /* Extra padding for INSIDE icons */
+      }
+
+      /* Receiver Messages (Left-aligned, secondary color) */
+      #chatDisplay li:not(.sender-message) {
+        width: auto;
+        max-width: 40%;
+        background-color: #ffffff; /* White/Light background */
+        color: #1f2937;
+        border: 1px solid #e5e7eb;
+        margin-right: auto; /* Push to the left */
+        border-bottom-left-radius: 0.5rem;
+      }
+
+      /* Edit/Delete icons container (INSIDE the bubble) */
+      #chatDisplay li.sender-message > span {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        cursor: pointer;
+        padding: 3px;
+        background-color: rgba(
+          0,
+          0,
+          0,
+          0.1
+        ); /* Subtle dark background inside bubble */
+        border-radius: 9999px;
+        line-height: 1;
+        display: flex; /* Use flex to align icon content */
+        align-items: center;
+        justify-content: center;
+        height: 20px;
+        width: 20px;
+      }
+
+      /* Positioning the Delete Icon */
+      #chatDisplay li.sender-message > span:last-child {
+        right: 8px; /* Close to the right edge */
+      }
+
+      /* Positioning the Edit Icon */
+      #chatDisplay li.sender-message > span:nth-last-child(2) {
+        right: 30px; /* Pushed slightly left of the delete icon */
+      }
+
+      #chatDisplay li.sender-message:hover > span {
+        opacity: 1;
+      }
+
+      /* Custom scrollbar for chat window */
+      #messagesbox::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #messagesbox::-webkit-scrollbar-thumb {
+        background: #9ca3af;
+        border-radius: 10px;
+      }
+      #messagesbox::-webkit-scrollbar-track {
+        background: #e5e7eb;
+      }
+      #receiversBox {
+        height: 470px;
+      }
+      #receiversBox::-webkit-scrollbar {
+        width: 6px;
+      }
+      #receiversBox::-webkit-scrollbar-thumb {
+        background: #9ca3af;
+        border-radius: 10px;
+      }
+      #receiversBox::-webkit-scrollbar-track {
+        background: #e5e7eb;
+      }
+
+      #add-btn {
+        background-color: #2563eb;
+        color: white;
+        border-radius: 50%;
+        padding: 10px;
+      }
+
+      #search-input {
+        flex-grow: 1; /* Allows the input to take up available space */
+        padding: 12px 20px; /* Inner spacing for text */
+        border: none; /* Removes default border */
+        outline: none; /* Removes outline on focus */
+        font-size: 16px; /* Text size */
+        color: #333; /* Darker text color */
+        background-color: transparent; /* Transparent background to show form's background */
+      }
+
+      #search-input::placeholder {
+        color: #888; /* Placeholder text color */
+      }
+
+      #search-input:focus {
+        background-color: #fff; /* White background on focus */
+        transition: background-color 0.3s ease; /* Smooth transition for background change */
+      }
+
+      /* Basic styling for the select element */
+      #select-box {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+
+      /* Styling for the options (though options have limited styling flexibility) */
+      #select-box option {
+        padding: 5px;
+      }
+
+      #user-list li {
+        padding: 10px;
+      }
+      #user-list li:hover {
+        background-color: #2564eb3a;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="w-full max-w-4xl space-y-6">
+      <h1 class="text-4xl font-extrabold text-gray-900 text-center pt-8 pb-4">
+        <span class="text-blue-600">Dual</span> Chat Simulator
+        <!-- <button id="add-btn" onclick="addOnClick()">+</button> -->
+      </h1>
+
+      <!-- 1. Start Chat Area -->
+      <div
+        id="topdiv1"
+        class="p-8 bg-white shadow-2xl rounded-2xl mx-auto max-w-lg w-full space-y-6 transform transition duration-500"
+      >
+        <h2 class="text-xl font-semibold text-gray-800 text-center">
+          Configure Participants
+        </h2>
+        <!-- <input
+          type="text"
+          id="receiver-name"
+          placeholder="Receiver Name (e.g., Alice)"
+          class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition shadow-inner"
+        /> -->
+
+        <button
+          onclick="startChat()"
+          class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-blue-700 transition duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
+        >
+          Start Chat Session
+        </button>
+      </div>
+
+      <!-- 2. Messages Box (Main Chat Window) - Now using a single UL for interleaved messages -->
+      <div class="flex flex-row gap-4">
+        <!-- Box 1 (1/3 width) -->
+        <div
+          id="receiversBox"
+          class="flex flex-col w-1/3 bg-gray-50 rounded-2xl shadow-inner border border-gray-200 p-4 overflow-y-scroll space-y-0"
+          style="display: none"
+        >
+          <!-- Content for Box 1 -->
+
+          <select name="myOption" id="select-box">
+            <option value="">--- Select User ---</option>
+          </select>
+          <div><ul id="user-list"></ul></div>
+        </div>
+
+        <!-- Box 2 (2/3 width) -->
+        <div
+          id="messagesbox"
+          class="flex flex-col w-2/3 bg-gray-50 rounded-2xl shadow-inner border border-gray-200 p-4 overflow-y-scroll space-y-0"
+          style="display: none"
+        >
+          <ul id="chatDisplay" class="p-0 m-0 w-full">
+            <!-- All LI elements generated by JS will go here -->
+          </ul>
+          <!-- Content for Box 2 -->
+        </div>
+      </div>
+
+      <!-- 3. Message Input Area -->
+      <div
+        id="MessageInputArea"
+        class="flex flex-col md:flex-row gap-6 w-full p-6 bg-white rounded-2xl shadow-xl border border-gray-100"
+        style="display: none"
+      >
+        <!-- Receiver Input -->
+        <div class="flex flex-col w-full md:w-1/2 space-y-3">
+          <textarea
+            rows="3"
+            placeholder="Receiver type message..."
+            id="receiverMessage"
+            class="w-full p-3 border-2 border-gray-300 rounded-xl resize-none focus:ring-green-500 focus:border-green-500 transition shadow-sm"
+          ></textarea>
+          <button
+            onclick="receiverchatDisplay()"
+            class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-3 rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition duration-300 shadow-md"
+          >
+            <i class="fas fa-paper-plane mr-2"></i> Send as Receiver
+          </button>
+        </div>
+
+        <!-- Receiver Input 2-->
+
+        <!-- <div
+          id="receiverName2"
+          class="hidden flex-col w-full md:w-1/2 space-y-3"
+        >
+          <textarea
+            rows="3"
+            placeholder="Receiver type message..."
+            id="receiverMessage2"
+            class="w-full p-3 border-2 border-gray-300 rounded-xl resize-none focus:ring-green-500 focus:border-green-500 transition shadow-sm"
+          ></textarea>
+          <button
+            onclick="receiverchatDisplay2()"
+            class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-3 rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition duration-300 shadow-md"
+          >
+            <i class="fas fa-paper-plane mr-2"></i> Send as Receiver
+          </button>
+        </div> -->
+
+        <!-- Sender Input -->
+        <div class="flex flex-col w-full md:w-1/2 space-y-3">
+          <textarea
+            rows="3"
+            placeholder="Sender type message (Editable/Deletable)..."
+            id="senderMessage"
+            class="w-full p-3 border-2 border-gray-300 rounded-xl resize-none focus:ring-blue-500 focus:border-blue-500 transition shadow-sm"
+          ></textarea>
+          <button
+            onclick="senderchatDisplay()"
+            class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 transition duration-300 shadow-md"
+          >
+            <i class="fas fa-edit mr-2"></i> Send as Sender
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Font Awesome (for icons) -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <script>
+      let isEdit = false;
+      let editingMessageId = null;
+      let editingType = null;
+      const SENDER_BUTTON_SELECTOR =
+        "#MessageInputArea > div:nth-child(2) > button";
+      let userArr = [];
+      let activeChatId = 2;
+
+      async function getData() {
+        try {
+          const response = await fetch(
+            "https://jsonplaceholder.typicode.com/users"
+          );
+          const data = await response.json();
+          console.log("fetched Data:", data);
+
+          console.log(data[0].id);
+          const newUserData = data.map((item) => {
+            return { id: item.id, name: item.name };
+          });
+
+          console.log("user id and name:", newUserData),
+            userArr.push(newUserData);
+          localStorage.setItem("user", JSON.stringify(newUserData));
+
+          startChat();
+        } catch (error) {
+          console.error("Error", error);
+        }
+      }
+
+      function userDisplay() {
+        let selectElement = document.getElementById("select-box");
+        let arr = JSON.parse(localStorage.getItem("user")) || [];
+
+        let filteredUsers = arr.filter((user) => user.id > 1);
+
+        filteredUsers.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = item.name;
+          selectElement.appendChild(option);
+        });
+
+        selectElement.addEventListener("change", function() {
+          if (!this.value) return 
+          activeChatId = Number(this.value)
+          console.log("active chat ID", activeChatId)
+          renderMessages()
+        })
+      }
+      userDisplay();
+
+      function userDisplayList() {
+        let selectElement = document.getElementById("user-list");
+        selectElement.innerHTML = ""; // clear old list
+
+        let arr = JSON.parse(localStorage.getItem("user")) || [];
+        let msgArr = JSON.parse(localStorage.getItem("Messages")) || [];
+
+        let filteredUsers = arr.filter((user) => user.id > 1);
+
+
+        filteredUsers.forEach((user) => {
+          const li = document.createElement("li");
+
+          const hasMsg = msgArr.some(
+            (m) => m.conversationId ===user.id || m.uid === user.id
+          );
+          if(!hasMsg) return
+
+          li.onclick = function () {
+            activeChatId = user.id;
+            console.log("user id", activeChatId);
+            renderMessages();
+          };
+          li.style.display = "flex";
+          li.style.alignItems = "center";
+          li.style.gap = "10px";
+          li.style.marginBottom = "8px";
+          li.style.listStyle = "none";
+
+          const initials = user.name.substring(0, 2).toUpperCase();
+
+          const avatar = document.createElement("div");
+          avatar.classList.add("avatar");
+          avatar.textContent = initials;
+
+          const nameSpan = document.createElement("span");
+          nameSpan.textContent = user.name;
+
+          li.appendChild(avatar);
+          li.appendChild(nameSpan);
+          selectElement.appendChild(li);
+        });
+      }
+
+      userDisplayList();
+
+      function addOnClick() {
+        let receiverName2 = prompt("Enter new Receiver Name");
+        if (!receiverName2) return;
+
+        userArr = JSON.parse(localStorage.getItem("user")) || [];
+
+        const newReceiver = {
+          id: 3,
+          name: receiverName2,
+        };
+
+        userArr.push(newReceiver);
+        localStorage.setItem("user", JSON.stringify(userArr));
+        document.getElementById("receiverName2").style.display = "flex";
+      }
+
+      function startChat() {
+        userArr = JSON.parse(localStorage.getItem("user")) || [];
+
+        if (userArr.length === 0) {
+          getData();
+        }
+
+        if (userArr.length) {
+          const sender = {
+            id: 1,
+            name: "Abdullah",
+          };
+
+          userArr = userArr.map((item) => {
+            if (item.id >= sender.id) {
+              return { ...item, id: item.id + 1 };
+            }
+            return item;
+          });
+
+          // userArr[0].id = 1
+          // userArr[0].name = 'Abdullah'
+
+          userArr.unshift(sender);
+          localStorage.setItem("user", JSON.stringify(userArr));
+
+          // let receiverName = document.getElementById("receiver-name").value;
+
+          // const receiver = {
+          //   id: 2,
+          //   name: receiverName,
+          // };
+
+          // userArr.push(receiver);
+          //           localStorage.setItem("user", JSON.stringify(userArr));
+        }
+
+        document.getElementById("MessageInputArea").style.display = "flex";
+        document.getElementById("topdiv1").style.display = "none";
+        document.getElementById("messagesbox").style.display = "flex";
+        document.getElementById("receiversBox").style.display = "flex";
+
+        renderMessages();
+      }
+
+      // Placeholder for custom modal logic (since alert/confirm is forbidden)
+      function confirmDelete() {
+        console.log("Simulating delete confirmation...");
+        return true;
+      }
+
+      function randomId() {
+        // Simple sequential ID generator for chronology
+        return Date.now() + Math.floor(Math.random() * 1000);
+      }
+
+      function renderMessages() {
+        const list = document.getElementById("chatDisplay");
+        list.innerHTML = "";
+        let messagesArray = JSON.parse(localStorage.getItem("Messages")) || [];
+        let chatMsgs = messagesArray.filter(
+          (msg) => msg.conversationId === activeChatId
+        );
+        let users = JSON.parse(localStorage.getItem("user")) || [];
+        messagesArray.sort((a, b) => a.id - b.id);
+
+        function handleEdit(msg) {
+          isEdit = true;
+          editingMessageId = msg.id;
+          if (msg.uid === 1) {
+            editingType = "sender";
+            document.getElementById("senderMessage").value = msg.message;
+            document.querySelector(SENDER_BUTTON_SELECTOR).innerHTML =
+              '<i class="fas fa-edit mr-2"></i> Update Message';
+          } else {
+            editingType = "receiver";
+            document.getElementById("receiverMessage").value = msg.message;
+            document.querySelector(
+              "#MessageInputArea > div:first-child > button"
+            ).textContent = "Update Receiver Message";
+          }
+        }
+
+        for (let msg of chatMsgs) {
+          const user = users.find((u) => u.id === msg.uid); // get user
+
+          const isSender = msg.uid === 1;
+
+          // PARENT ROW (avatar + message bubble)
+          const row = document.createElement("div");
+          row.classList.add("chat-row");
+
+          // --- AVATAR ---
+          const avatar = document.createElement("div");
+          // avatar.classList.add("avatar");
+          // avatar.textContent = userInitial;
+
+          // MESSAGE BUBBLE
+          const li = document.createElement("li");
+          li.setAttribute("data-id", msg.id);
+
+          // ⭐ CREATE NAME ABOVE THE MESSAGE
+          const nameLabel = document.createElement("div");
+          nameLabel.textContent = user ? user.name : "Unknown";
+          nameLabel.style.fontSize = "12px";
+          nameLabel.style.fontWeight = "bold";
+          nameLabel.style.marginBottom = "4px";
+          nameLabel.style.opacity = "0.8";
+
+          // ⭐ BUILD BUBBLE CONTENT
+          li.innerHTML = "";
+          li.appendChild(nameLabel);
+          li.append(msg.message);
+
+          // sender styling
+          if (isSender) li.classList.add("sender-message");
+
+          if (isSender) li.classList.add("sender-message");
+
+          // ICONS
+          const editSpan = document.createElement("span");
+          editSpan.innerHTML = "✏️";
+          editSpan.title = "Edit";
+
+          const deleteSpan = document.createElement("span");
+          deleteSpan.innerHTML = "🗑️";
+          deleteSpan.title = "Delete";
+
+          // DELETE
+          deleteSpan.addEventListener("click", (e) => {
+            e.stopPropagation();
+            let arr = JSON.parse(localStorage.getItem("Messages"));
+            arr = arr.filter((m) => m.id !== msg.id);
+            localStorage.setItem("Messages", JSON.stringify(arr));
+            renderMessages();
+          });
+
+          // EDIT
+          editSpan.addEventListener("click", (e) => {
+            e.stopPropagation();
+            handleEdit(msg); // your existing edit logic
+          });
+
+          li.appendChild(editSpan);
+          li.appendChild(deleteSpan);
+
+          // Add avatar + bubble together
+          // Sender → avatar on RIGHT
+          if (isSender) {
+            row.classList.add("justify-end");
+            row.appendChild(li);
+            row.appendChild(avatar);
+          }
+
+          // Receiver → avatar on LEFT
+          else {
+            row.appendChild(avatar);
+            row.appendChild(li);
+          }
+
+          // Append row into chat list
+          list.appendChild(row);
+        }
+
+        const box = document.getElementById("messagesbox");
+        setTimeout(() => {
+          box.scrollTop = box.scrollHeight;
+        }, 100);
+      }
+
+      window.onload = function () {
+        let user = JSON.parse(localStorage.getItem("user")) || [];
+        let receiver2 = localStorage.getItem("receiverName2");
+
+        if (user.length > 0) {
+          document.getElementById("messagesbox").style.display = "flex";
+          document.getElementById("receiversBox").style.display = "flex";
+
+          document.getElementById("MessageInputArea").style.display = "flex";
+          document.getElementById("topdiv1").style.display = "none";
+
+          renderMessages();
+        }
+
+        // if (user) {
+        //   document.getElementById("receiverName2").style.display = "flex";
+        // }
+      };
+
+      // Handle the Sender message creation and editing logic
+      function senderchatDisplay() {
+        const inputElement = document.getElementById("senderMessage");
+        const msg = inputElement.value.trim();
+
+        if (msg === "") return;
+
+        if (isEdit === true && editingType === "sender") {
+          let arr = JSON.parse(localStorage.getItem("Messages")) || [];
+
+          arr = arr.map((item) => {
+            if (item.id === editingMessageId) {
+              return { ...item, message: msg };
+            }
+            return item;
+          });
+
+          localStorage.setItem("Messages", JSON.stringify(arr));
+
+          // Reset edit state and UI
+          isEdit = false;
+          editingMessageId = null;
+          editingType = null;
+          inputElement.value = "";
+          document.querySelector(SENDER_BUTTON_SELECTOR).innerHTML =
+            '<i class="fas fa-edit mr-2"></i> Send as Sender';
+
+          renderMessages(); // Rerender instead of reload
+        } else {
+          // New message creation
+          let sender = localStorage.getItem("senderName") || "Sender";
+          let userArr = JSON.parse(localStorage.getItem("user")) || [];
+
+          const obj = {
+            id: randomId(),
+            uid: userArr[0].id,
+
+            message: msg,
+            conversationId: activeChatId,
+          };
+
+          let messagesArray =
+            JSON.parse(localStorage.getItem("Messages")) || [];
+          messagesArray.push(obj);
+          localStorage.setItem("Messages", JSON.stringify(messagesArray));
+
+          inputElement.value = "";
+          renderMessages();
+        }
+      }
+
+      // Handle the Receiver message creation logic
+      function receiverchatDisplay() {
+        const input = document.getElementById("receiverMessage");
+        const msg = input.value.trim();
+        if (msg === "") return;
+
+        // Save edited receiver message
+        if (isEdit && editingType === "receiver") {
+          let arr = JSON.parse(localStorage.getItem("Messages")) || [];
+
+          arr = arr.map((item) => {
+            if (item.id === editingMessageId) return { ...item, message: msg };
+            return item;
+          });
+
+          localStorage.setItem("Messages", JSON.stringify(arr));
+
+          isEdit = false;
+          editingMessageId = null;
+          editingType = null;
+
+          input.value = "";
+          document.querySelector(
+            "#MessageInputArea > div:first-child > button"
+          ).textContent = "Send as Receiver";
+
+          return renderMessages();
+        }
+
+        let userArr = JSON.parse(localStorage.getItem("user")) || [];
+        let currentUser = userArr.find((u) => u.id === activeChatId);
+
+        // Normal new message
+        const obj = {
+          id: randomId(),
+          conversationId: activeChatId,
+          uid: currentUser.id,
+          name: currentUser.name,
+          message: msg,
+        };
+
+        let arr = JSON.parse(localStorage.getItem("Messages")) || [];
+        arr.push(obj);
+        localStorage.setItem("Messages", JSON.stringify(arr));
+
+        input.value = "";
+        renderMessages();
+      }
+
+      function receiverchatDisplay2() {
+        const input = document.getElementById("receiverMessage2");
+        const msg = input.value.trim();
+        if (msg === "") return;
+
+        // Save edited receiver message
+        if (isEdit && editingType === "receiver2") {
+          let arr = JSON.parse(localStorage.getItem("Messages")) || [];
+
+          arr = arr.map((item) => {
+            if (item.id === editingMessageId) return { ...item, message: msg };
+            return item;
+          });
+
+          localStorage.setItem("Messages", JSON.stringify(arr));
+
+          isEdit = false;
+          editingMessageId = null;
+          editingType = null;
+
+          input.value = "";
+          document.querySelector(
+            "#MessageInputArea > div:first-child > button"
+          ).textContent = "Send as Receiver 2";
+
+          return renderMessages();
+        }
+
+        // Normal new message
+        let userArr = JSON.parse(localStorage.getItem("user")) || [];
+
+        const obj = {
+          id: randomId(),
+          uid: userArr[2].id,
+          message: msg,
+        };
+
+        let arr = JSON.parse(localStorage.getItem("Messages")) || [];
+        arr.push(obj);
+        localStorage.setItem("Messages", JSON.stringify(arr));
+
+        input.value = "";
+        renderMessages();
+      }
+    </script>
+  </body>
+</html>

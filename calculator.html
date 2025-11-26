@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+         body{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        #inputs{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            width: 24px;
+            row-gap: 4px;
+        }
+        #operatorSelectorDiv{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            flex-direction: row;
+            column-gap: 4px;
+        }
+        #options{
+            width:auto
+        }
+      #inputs #output{
+        border: 2px;
+        border-color: black;
+        border-radius: 2px;
+       }
+    </style>
+</head>
+<body>
+    <h1>Calculator</h1>
+   
+   
+    <div id="inputs">
+        <input id="input1" type="number">
+        <input id="input2" type="number">
+
+        <div id="operatorSelectorDiv">
+            <button id="add" onclick="add()">+</button>
+            <button id="subtract" onclick="subtract()">-</button>
+           <button id="multiply" onclick="multiply()">x</button>
+            <button id="divide" onclick="divide()">/</button>
+
+        </div>
+        
+       <output id="output" ></output>
+       
+        
+
+
+    </div>
+
+    <script>
+            let input1 = document.getElementById("input1").value;
+            let input2 = document.getElementById("input1").value;
+
+
+                
+        function add() {
+            const input1 = document.getElementById("input1").value;
+            const input2 = document.getElementById("input2").value;
+
+            const num1 = Number(input1)
+            const num2 = Number(input2)
+
+            const sum = num1 + num2
+            console.log(sum)
+            document.getElementById("output").textContent = sum
+            
+        }
+
+        function subtract() {
+            const input1 = document.getElementById("input1").value;
+            const input2 = document.getElementById("input2").value;
+
+            const num1 = Number(input1)
+            const num2 = Number(input2)
+
+            const subtract = num1 - num2
+            console.log(subtract)
+            document.getElementById("output").textContent = subtract
+            
+        }
+        function multiply() {
+            const input1 = document.getElementById("input1").value;
+            const input2 = document.getElementById("input2").value;
+
+            const num1 = Number(input1)
+            const num2 = Number(input2)
+
+            const multiply = num1 * num2
+            console.log(multiply)
+            document.getElementById("output").textContent = multiply
+            
+        }
+
+        function divide() {
+            const input1 = document.getElementById("input1").value;
+            const input2 = document.getElementById("input2").value;
+
+            const num1 = Number(input1)
+            const num2 = Number(input2)
+
+            const sum = num1 / num2
+            console.log(sum)
+            document.getElementById("output").textContent = sum
+            
+        }
+
+        
+
+                
+            
+
+           
+         
+
+
+    </script>
+   
+    
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task2</title>
+    <style>
+        body{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <H1>Agent</H1>
+    <h3>Keywords Allowed: Search | Chat | Calculator</h3>
+    <div >
+    <input id="searchInput" type="text" >
+    <button id="searchBtn" onclick="Search()">Search</button>
+
+    </div>
+
+
+    <script>
+
+        function Search() {
+                    let SearchInput = document.getElementById("searchInput").value
+
+            if (SearchInput == "search" || SearchInput == "Search") {
+                window.location.href="https://www.google.com/"
+            } else if ( SearchInput == "Calculator" || SearchInput == "calculator"){
+                window.location.href="calculator.html"
+
+            } else if (SearchInput=="chat" || SearchInput=="Chat"){
+                window.location.href="chat.html"
+            } else (
+                alert("Invalid Search")
+            )
+            
+            
+            
+        }
+
+    </script>
+    
+</body>
+
+</html>
